@@ -1,0 +1,28 @@
+name: video_downloader_admin
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.0.0
+  http: ^1.0.0
+  google_fonts: ^6.2.1
+  firebase_admin: 
+  googleapis_auth: ^2.0.0
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+   - video-downloader-admin-b4c12c0fe07e.json
+ 
+  uses-material-design: true
