@@ -14,6 +14,7 @@ dependencies:
   google_fonts: ^6.2.1
   firebase_admin: 
   googleapis_auth: ^2.0.0
+  cloud_firestore: ^5.6.12
 
 
 dev_dependencies:
@@ -23,6 +24,6 @@ dev_dependencies:
 
 flutter:
   assets:
-   - video-downloader-admin-b4c12c0fe07e.json
+   - secrets/video-downloader-admin-b4c12c0fe07e.json
  
   uses-material-design: true
