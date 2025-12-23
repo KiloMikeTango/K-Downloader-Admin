@@ -2,7 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:video_downloader_admin/pages/home_page.dart';
-import 'package:video_downloader_admin/widgets/glass_card.dart';
+import '../widgets/glass_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -76,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               subtitle: Text(
-                'If enabled, client app can show a maintenance screen or block downloads.',
+                'When enabled, K Downloader shows a maintenance screen instead of normal UI.',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.75),
                   fontSize: 12 * s,
