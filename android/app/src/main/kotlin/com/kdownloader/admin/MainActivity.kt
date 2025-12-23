@@ -1,4 +1,4 @@
-package com.example.video_downloader_admin
+package com.kdownloader.admin
 
 import io.flutter.embedding.android.FlutterActivity
 
