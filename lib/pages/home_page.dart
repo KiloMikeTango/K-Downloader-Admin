@@ -1,7 +1,7 @@
 // lib/home_page.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
+import '../widgets/daily_stats_card.dart';
 import 'package:video_downloader_admin/pages/notifications_page.dart';
 import 'package:video_downloader_admin/pages/settings_page.dart';
 import 'package:video_downloader_admin/pages/tutorial_steps_page.dart';
@@ -190,7 +190,14 @@ class _HomePageState extends State<HomePage> {
         padding: EdgeInsets.all(24 * s),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
-          child: child,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const DailyStatsCard(), // <- analytics on top
+              SizedBox(height: 20 * s),
+              Expanded(child: child), // <- page content below
+            ],
+          ),
         ),
       ),
     );
