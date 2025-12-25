@@ -84,8 +84,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         'https://www.googleapis.com/auth/firebase.messaging',
       ];
 
-      final client =
-          await auth.clientViaServiceAccount(serviceAccount, scopes);
+      final client = await auth.clientViaServiceAccount(serviceAccount, scopes);
 
       const projectId = 'video-downloader-admin';
 
@@ -96,9 +95,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'title': titleController.text.trim(),
             'body': messageController.text.trim(),
           },
+          'android': {
+            'priority': 'HIGH',
+            // optional: channel_id if you use a custom one on client
+          },
+          'data': {'click_action': 'FLUTTER_NOTIFICATION_CLICK'},
         },
       };
-
       final response = await client.post(
         Uri.parse(
           'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
@@ -116,8 +119,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Failed: ${response.statusCode} - ${response.body}'),
+            content: Text('Failed: ${response.statusCode} - ${response.body}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -126,10 +128,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       client.close();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
 
@@ -155,10 +154,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           SizedBox(height: 6 * s),
           TextField(
             controller: titleController,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14 * s,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 14 * s),
             decoration: _glassInputDecoration(
               context,
               label: 'Notification Title',
@@ -170,10 +166,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           TextField(
             controller: messageController,
             maxLines: 5,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14 * s,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 14 * s),
             decoration: _glassInputDecoration(
               context,
               label: 'Notification Message',

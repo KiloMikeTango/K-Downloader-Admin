@@ -127,7 +127,7 @@ class TutorialStepsPage extends StatelessWidget {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.white)),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -155,7 +155,7 @@ class TutorialStepsPage extends StatelessWidget {
                           }
                           if (context.mounted) Navigator.pop(context);
                         },
-                        child: Text(existing == null ? 'Create' : 'Save'),
+                        child: Text(existing == null ? 'Create' : 'Save',style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -310,7 +310,7 @@ class TutorialStepsPage extends StatelessWidget {
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context, false),
-                                          child: const Text('Cancel'),
+                                          child: const Text('Cancel',style: TextStyle(color: Colors.white)),
                                         ),
                                         TextButton(
                                           onPressed: () =>
