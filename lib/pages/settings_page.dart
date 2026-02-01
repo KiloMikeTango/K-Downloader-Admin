@@ -156,7 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   value: isMaintenance!,
                   onChanged: _updateMaintenanceFlag,
-                  activeColor: Colors.blue.shade700,
+                  activeThumbColor: Colors.blue.shade700,
                 ),
               SizedBox(height: isCompact ? 20 : 24),
               TextField(
@@ -174,7 +174,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.blue.shade700,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -217,7 +220,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.blue.shade700,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),

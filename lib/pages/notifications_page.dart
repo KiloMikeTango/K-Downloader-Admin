@@ -54,36 +54,43 @@ class _NotificationsPageState extends State<NotificationsPage> {
           'data': {'click_action': 'FLUTTER_NOTIFICATION_CLICK'},
         },
       };
-      final response = await client.post(
-        Uri.parse(
-          'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
-        ),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode(messagePayload),
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Notification sent successfully.')),
-        );
-        titleController.clear();
-        messageController.clear();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed: ${response.statusCode} - ${response.body}'),
-            backgroundColor: Colors.red,
+      try {
+        final response = await client.post(
+          Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
           ),
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode(messagePayload),
         );
-      }
 
-      client.close();
+        if (!mounted) return;
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Notification sent successfully.')),
+          );
+          titleController.clear();
+          messageController.clear();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed: ${response.statusCode} - ${response.body}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        client.close();
+      }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
 
+    if (!mounted) return;
     setState(() => sending = false);
   }
 
@@ -110,7 +117,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.blue.shade700,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -130,7 +140,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.blue.shade700,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),

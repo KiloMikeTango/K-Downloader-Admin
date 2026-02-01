@@ -139,6 +139,10 @@ class TutorialStepsPage extends StatelessWidget {
                               size: 20,
                               color: Colors.blue.shade700,
                             ),
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
                             onPressed: () => _openStepDialog(
                               context,
                               service,
@@ -271,7 +275,11 @@ class TutorialStepsPage extends StatelessWidget {
                                     ),
                                   ),
                                   style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    minimumSize: const Size(0, 32),
                                     tapTargetSize:
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
@@ -395,6 +403,10 @@ class TutorialStepsPage extends StatelessWidget {
                                   size: 20,
                                   color: Colors.blue.shade700,
                                 ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
                                 onPressed: () => _openStepDialog(
                                   context,
                                   service,
@@ -407,6 +419,10 @@ class TutorialStepsPage extends StatelessWidget {
                                   Icons.delete_outline_rounded,
                                   size: 20,
                                   color: Colors.red.shade700,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
                                 ),
                                 onPressed: () async {
                                   final confirmed =

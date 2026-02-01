@@ -51,14 +51,14 @@ class _LoginPageState extends State<LoginPage> {
               ? errorStr.split('Exception: ')[1].split('.')[0]
               : 'Authentication failed.';
           _errorMessage = cleanError.length > 60
-              ? cleanError.substring(0, 60) + '...'
+              ? '${cleanError.substring(0, 60)}...'
               : cleanError;
         } else {
           final cleanError = errorStr.contains('Exception: ')
               ? errorStr.split('Exception: ')[1]
               : errorStr;
           _errorMessage = cleanError.length > 80
-              ? cleanError.substring(0, 80) + '...'
+              ? '${cleanError.substring(0, 80)}...'
               : cleanError;
         }
       });
