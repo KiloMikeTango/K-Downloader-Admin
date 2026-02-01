@@ -109,7 +109,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: screenWidth >= 900 ? 24 : 16,
-        vertical: 16,
+        vertical: isSmallScreen ? 12 : 16,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -283,6 +283,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPageBody(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final maxContentWidth = screenWidth >= 1400 ? 1200.0 : 900.0;
+    final isWide = screenWidth >= 900;
 
     Widget child;
     switch (selectedPage) {
@@ -307,16 +308,20 @@ class _HomePageState extends State<HomePage> {
             child: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth >= 900 ? 24 : 16,
-                  vertical: 24,
+                  horizontal: isWide ? 24 : 16,
+                  vertical: isWide ? 24 : 16,
                 ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: maxContentWidth),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (!isWide) ...[
+                        _buildMobileNav(context),
+                        const SizedBox(height: 16),
+                      ],
                       const DailyStatsCard(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       child,
                     ],
                   ),
@@ -326,6 +331,33 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildMobileNav(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _MobileNavButton(
+          label: 'Notifications',
+          icon: Icons.notifications_active_outlined,
+          selected: selectedPage == 0,
+          onTap: () => setState(() => selectedPage = 0),
+        ),
+        _MobileNavButton(
+          label: 'Tutorial',
+          icon: Icons.article_outlined,
+          selected: selectedPage == 1,
+          onTap: () => setState(() => selectedPage = 1),
+        ),
+        _MobileNavButton(
+          label: 'Settings',
+          icon: Icons.settings_outlined,
+          selected: selectedPage == 2,
+          onTap: () => setState(() => selectedPage = 2),
+        ),
+      ],
     );
   }
 
@@ -402,6 +434,48 @@ class _SidebarItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MobileNavButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MobileNavButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        size: 18,
+        color: selected ? Colors.blue.shade700 : Colors.grey.shade700,
+      ),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: selected ? Colors.blue.shade700 : Colors.grey.shade800,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          fontSize: 13,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        side: BorderSide(
+          color: selected ? Colors.blue.shade200 : Colors.grey.shade300,
+        ),
+        backgroundColor: selected ? Colors.blue.shade50 : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

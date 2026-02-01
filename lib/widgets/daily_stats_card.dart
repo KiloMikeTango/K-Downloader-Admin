@@ -19,43 +19,59 @@ class DailyStatsCard extends StatelessWidget {
         final tk = (data?['tiktokCount'] ?? 0) as int;
         final fb = (data?['facebookCount'] ?? 0) as int;
 
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Today Downloads (24h)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildStatItem('YouTube', yt, Colors.red)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildStatItem('TikTok', tk, Colors.green)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildStatItem('Facebook', fb, Colors.blue)),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 680;
+            return Container(
+              padding: EdgeInsets.all(isCompact ? 16 : 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(13),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
-            ],
-          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Today Downloads',
+                    style: TextStyle(
+                      fontSize: isCompact ? 14 : 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  SizedBox(height: isCompact ? 12 : 16),
+                  if (isCompact)
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _buildStatItem('YouTube', yt, Colors.red),
+                        _buildStatItem('TikTok', tk, Colors.green),
+                        _buildStatItem('Facebook', fb, Colors.blue),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(child: _buildStatItem('YouTube', yt, Colors.red)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildStatItem('TikTok', tk, Colors.green)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildStatItem('Facebook', fb, Colors.blue)),
+                      ],
+                    ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -65,9 +81,9 @@ class DailyStatsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withAlpha(51)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +100,7 @@ class DailyStatsCard extends StatelessWidget {
           Text(
             value.toString(),
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: color,
             ),

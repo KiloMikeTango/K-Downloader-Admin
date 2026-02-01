@@ -74,13 +74,14 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 600;
+    final isCompact = MediaQuery.of(context).size.width < 420;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isCompact ? 16 : 24),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: isWide ? 440 : double.infinity,
@@ -90,32 +91,23 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 8),
+                    SizedBox(height: isCompact ? 4 : 8),
                     Icon(
                       Icons.admin_panel_settings,
-                      size: 48,
+                      size: isCompact ? 40 : 48,
                       color: Colors.blue.shade700,
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
+                    SizedBox(height: isCompact ? 16 : 20),
+                    Text(
                       'Admin Login',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: isCompact ? 22 : 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'K-Downloader Admin Panel',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: isCompact ? 24 : 32),
 
                     if (_errorMessage != null)
                       Container(
@@ -155,7 +147,9 @@ class _LoginPageState extends State<LoginPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isCompact ? 14 : 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(color: Colors.grey.shade300),
@@ -177,8 +171,8 @@ class _LoginPageState extends State<LoginPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
-                                  width: 20,
-                                  height: 20,
+                                  width: isCompact ? 18 : 20,
+                                  height: isCompact ? 18 : 20,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(4),
                                     color: Colors.white,
@@ -189,11 +183,11 @@ class _LoginPageState extends State<LoginPage> {
                                     size: 18,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                const Text(
+                                const SizedBox(width: 10),
+                                Text(
                                   'Sign in with Google',
                                   style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: isCompact ? 14 : 15,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
