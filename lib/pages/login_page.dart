@@ -1,7 +1,6 @@
 // lib/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:video_downloader_admin/services/auth_service.dart';
-import 'package:video_downloader_admin/widgets/glass_card.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -76,9 +75,9 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 600;
     final isCompact = MediaQuery.of(context).size.width < 420;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -87,115 +86,114 @@ class _LoginPageState extends State<LoginPage> {
               constraints: BoxConstraints(
                 maxWidth: isWide ? 440 : double.infinity,
               ),
-              child: GlassCard(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: isCompact ? 4 : 8),
-                    Icon(
-                      Icons.admin_panel_settings,
-                      size: isCompact ? 40 : 48,
-                      color: Colors.blue.shade700,
-                    ),
-                    SizedBox(height: isCompact ? 16 : 20),
-                    Text(
-                      'Admin Login',
-                      style: TextStyle(
-                        fontSize: isCompact ? 22 : 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: isCompact ? 24 : 32),
-
-                    if (_errorMessage != null)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.red.shade200,
-                            width: 1,
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(isCompact ? 20 : 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color:
+                                  theme.colorScheme.primary.withAlpha(18),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.admin_panel_settings,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Colors.red.shade700,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _errorMessage!,
-                                style: TextStyle(
-                                  color: Colors.red.shade700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
-                        padding: EdgeInsets.symmetric(
-                          vertical: isCompact ? 14 : 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.grey,
-                                ),
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: isCompact ? 18 : 20,
-                                  height: isCompact ? 18 : 20,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    color: Colors.white,
-                                  ),
-                                  child: const Icon(
-                                    Icons.g_mobiledata,
-                                    color: Colors.red,
-                                    size: 18,
+                                Text(
+                                  'K Downloader Admin',
+                                  style:
+                                      theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
                                 Text(
-                                  'Sign in with Google',
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 14 : 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  'Sign in with your admin account',
+                                  style: theme.textTheme.bodySmall,
                                 ),
                               ],
                             ),
-                    ),
-                  ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isCompact ? 20 : 24),
+                      Text(
+                        'Admin Login',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontSize: isCompact ? 20 : 24,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: isCompact ? 16 : 20),
+                      if (_errorMessage != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.error.withAlpha(15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: theme.colorScheme.error.withAlpha(70),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: theme.colorScheme.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _signInWithGoogle,
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.g_mobiledata),
+                        label: Text(
+                          _isLoading ? 'Signing in...' : 'Continue with Google',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Only approved admin emails can access the dashboard.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

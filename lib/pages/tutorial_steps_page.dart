@@ -2,64 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:video_downloader_admin/models/tutorial_step.dart';
 import 'package:video_downloader_admin/services/tutorial_steps_service.dart';
-import 'package:video_downloader_admin/widgets/glass_card.dart';
+import 'package:video_downloader_admin/widgets/app_snackbar.dart';
+import 'package:video_downloader_admin/widgets/form_section.dart';
+import 'package:video_downloader_admin/widgets/info_card.dart';
 
 class TutorialStepsPage extends StatelessWidget {
   const TutorialStepsPage({super.key});
-
-  Widget _summaryTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withAlpha(64)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: color.withAlpha(46),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: Colors.grey.shade900,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _imagePlaceholder(Color borderColor) {
     return Container(
@@ -72,401 +20,175 @@ class TutorialStepsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStepCard(
-    BuildContext context,
-    TutorialStep step,
-    TutorialStepsService service,
-  ) {
+  Widget _imagePreview(TutorialStep step) {
     final hasImage = step.imageUrl.trim().isNotEmpty;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: hasImage
+          ? Image.network(
+              step.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return _imagePlaceholder(Colors.grey.shade200);
+              },
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return _imagePlaceholder(Colors.grey.shade200);
+              },
+            )
+          : _imagePlaceholder(Colors.grey.shade200),
+    );
+  }
+
+  Widget _buildButtonCell(BuildContext context, TutorialStep step) {
+    final theme = Theme.of(context);
     final hasButton =
         step.buttonText != null && step.buttonText!.trim().isNotEmpty;
     final buttonUrl = step.buttonUrl?.trim() ?? '';
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 600;
-        return InkWell(
-          onTap: () => _openStepDialog(context, service, existing: step),
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding: EdgeInsets.all(isCompact ? 14 : 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          hasButton ? step.buttonText!.trim() : 'No button',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: hasButton
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withAlpha(120),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (buttonUrl.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          SizedBox(
+            width: 180,
+            child: Text(
+              buttonUrl,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withAlpha(120),
+              ),
             ),
-            child: isCompact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    TutorialStepsService service,
+    TutorialStep step,
+  ) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Delete step?'),
+            content: Text('This will permanently delete step "${step.text}".'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(
+                  'Delete',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    try {
+      await service.deleteStep(step.id);
+      if (context.mounted) {
+        AppSnackBar.showSuccess(context, 'Step deleted.');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackBar.showError(context, 'Failed to delete step: $e');
+      }
+    }
+  }
+
+  Widget _buildStepsTable(
+    BuildContext context,
+    List<TutorialStep> steps,
+    TutorialStepsService service,
+    bool isCompact,
+  ) {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columnSpacing: isCompact ? 16 : 24,
+        headingRowColor: WidgetStateProperty.all(
+          theme.colorScheme.primary.withAlpha(10),
+        ),
+        dataRowMinHeight: 64,
+        dataRowMaxHeight: 96,
+        columns: const [
+          DataColumn(label: Text('Order')),
+          DataColumn(label: Text('Text')),
+          DataColumn(label: Text('Image')),
+          DataColumn(label: Text('Button')),
+          DataColumn(label: Text('Actions')),
+        ],
+        rows: [
+          for (final step in steps)
+            DataRow(
+              cells: [
+                DataCell(Text(step.order.toString())),
+                DataCell(
+                  SizedBox(
+                    width: isCompact ? 180 : 280,
+                    child: Text(
+                      step.text,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(width: 96, height: 64, child: _imagePreview(step)),
+                ),
+                DataCell(_buildButtonCell(context, step)),
+                DataCell(
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.blue.shade50,
-                            child: Text(
-                              step.order.toString(),
-                              style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              step.text,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade900,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Edit',
-                            icon: Icon(
-                              Icons.edit_rounded,
-                              size: 20,
-                              color: Colors.blue.shade700,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 36,
-                              minHeight: 36,
-                            ),
-                            onPressed: () => _openStepDialog(
-                              context,
-                              service,
-                              existing: step,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 96,
-                            height: 64,
-                            child: hasImage
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      step.imageUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return _imagePlaceholder(
-                                              Colors.grey.shade200,
-                                            );
-                                          },
-                                      loadingBuilder:
-                                          (context, child, progress) {
-                                            if (progress == null) return child;
-                                            return _imagePlaceholder(
-                                              Colors.grey.shade200,
-                                            );
-                                          },
-                                    ),
-                                  )
-                                : _imagePlaceholder(Colors.grey.shade200),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.link_rounded,
-                                      size: 14,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        hasButton
-                                            ? step.buttonText!.trim()
-                                            : 'No button',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: hasButton
-                                              ? Colors.blue.shade700
-                                              : Colors.grey.shade500,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (buttonUrl.isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    buttonUrl,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade500,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                                const SizedBox(height: 6),
-                                TextButton.icon(
-                                  onPressed: () async {
-                                    final confirmed =
-                                        await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Delete step?'),
-                                            content: Text(
-                                              'This will permanently delete step "${step.text}".',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                  context,
-                                                  false,
-                                                ),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                  context,
-                                                  true,
-                                                ),
-                                                child: const Text(
-                                                  'Delete',
-                                                  style: TextStyle(
-                                                    color: Colors.red,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ) ??
-                                        false;
-                                    if (confirmed) {
-                                      await service.deleteStep(step.id);
-                                    }
-                                  },
-                                  icon: Icon(
-                                    Icons.delete_outline_rounded,
-                                    size: 18,
-                                    color: Colors.red.shade700,
-                                  ),
-                                  label: Text(
-                                    'Delete',
-                                    style: TextStyle(
-                                      color: Colors.red.shade700,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    minimumSize: const Size(0, 32),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.blue.shade50,
-                        child: Text(
-                          step.order.toString(),
-                          style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      IconButton(
+                        tooltip: 'Edit',
+                        icon: Icon(
+                          Icons.edit_rounded,
+                          size: 20,
+                          color: theme.colorScheme.primary,
                         ),
+                        onPressed: () =>
+                            _openStepDialog(context, service, existing: step),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              step.text,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade900,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.link_rounded,
-                                  size: 14,
-                                  color: Colors.grey.shade500,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    hasButton
-                                        ? step.buttonText!.trim()
-                                        : 'No button',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: hasButton
-                                          ? Colors.blue.shade700
-                                          : Colors.grey.shade500,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (buttonUrl.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                buttonUrl,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.grey.shade500,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ],
+                      IconButton(
+                        tooltip: 'Delete',
+                        icon: Icon(
+                          Icons.delete_outline_rounded,
+                          size: 20,
+                          color: theme.colorScheme.error,
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          SizedBox(
-                            width: 100,
-                            height: 68,
-                            child: hasImage
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      step.imageUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return _imagePlaceholder(
-                                              Colors.grey.shade200,
-                                            );
-                                          },
-                                      loadingBuilder:
-                                          (context, child, progress) {
-                                            if (progress == null) return child;
-                                            return _imagePlaceholder(
-                                              Colors.grey.shade200,
-                                            );
-                                          },
-                                    ),
-                                  )
-                                : _imagePlaceholder(Colors.grey.shade200),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Edit',
-                                icon: Icon(
-                                  Icons.edit_rounded,
-                                  size: 20,
-                                  color: Colors.blue.shade700,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 36,
-                                  minHeight: 36,
-                                ),
-                                onPressed: () => _openStepDialog(
-                                  context,
-                                  service,
-                                  existing: step,
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: 'Delete',
-                                icon: Icon(
-                                  Icons.delete_outline_rounded,
-                                  size: 20,
-                                  color: Colors.red.shade700,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 36,
-                                  minHeight: 36,
-                                ),
-                                onPressed: () async {
-                                  final confirmed =
-                                      await showDialog<bool>(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                          title: const Text('Delete step?'),
-                                          content: Text(
-                                            'This will permanently delete step "${step.text}".',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              child: const Text(
-                                                'Delete',
-                                                style: TextStyle(
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ) ??
-                                      false;
-                                  if (confirmed) {
-                                    await service.deleteStep(step.id);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                        onPressed: () => _confirmDelete(context, service, step),
                       ),
                     ],
                   ),
-          ),
-        );
-      },
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 
@@ -475,6 +197,7 @@ class TutorialStepsPage extends StatelessWidget {
     TutorialStepsService service, {
     TutorialStep? existing,
   }) {
+    final parentContext = context;
     final orderCtrl = TextEditingController(
       text: existing?.order.toString() ?? '',
     );
@@ -489,11 +212,12 @@ class TutorialStepsPage extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (_) => LayoutBuilder(
+      builder: (dialogContext) => LayoutBuilder(
         builder: (context, constraints) {
           final dialogWidth = constraints.maxWidth > 600
               ? 500.0
               : constraints.maxWidth * 0.9;
+          final theme = Theme.of(context);
           return Dialog(
             child: Container(
               width: dialogWidth,
@@ -620,13 +344,13 @@ class TutorialStepsPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         TextButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => Navigator.pop(dialogContext),
                           child: const Text('Cancel'),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue.shade700,
+                            backgroundColor: theme.colorScheme.primary,
                           ),
                           onPressed: () async {
                             final order =
@@ -643,12 +367,29 @@ class TutorialStepsPage extends StatelessWidget {
                                   ? null
                                   : buttonUrlCtrl.text.trim(),
                             );
-                            if (existing == null) {
-                              await service.createStep(step);
-                            } else {
-                              await service.updateStep(step);
+                            try {
+                              if (existing == null) {
+                                await service.createStep(step);
+                              } else {
+                                await service.updateStep(step);
+                              }
+                              if (parentContext.mounted) {
+                                Navigator.pop(dialogContext);
+                                AppSnackBar.showSuccess(
+                                  parentContext,
+                                  existing == null
+                                      ? 'Step created.'
+                                      : 'Step updated.',
+                                );
+                              }
+                            } catch (e) {
+                              if (parentContext.mounted) {
+                                AppSnackBar.showError(
+                                  parentContext,
+                                  'Failed to save step: $e',
+                                );
+                              }
                             }
-                            if (context.mounted) Navigator.pop(context);
                           },
                           child: Text(
                             existing == null ? 'Create' : 'Save',
@@ -670,121 +411,80 @@ class TutorialStepsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = TutorialStepsService();
-
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  'Tutorial Steps',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade700,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () => _openStepDialog(context, service),
-              icon: const Icon(
-                Icons.add_rounded,
-                size: 18,
-                color: Colors.white,
-              ),
-              label: const Text(
-                'New Step',
-                style: TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          StreamBuilder<List<TutorialStep>>(
-            stream: service.watchSteps(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final steps = snapshot.data ?? [];
-              if (steps.isEmpty) {
-                return Center(
-                  child: Text(
-                    'No tutorial steps yet.\nClick "New Step" to create one.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                  ),
-                );
-              }
-              final withButtons = steps
-                  .where(
-                    (step) =>
-                        step.buttonText != null &&
-                        step.buttonText!.trim().isNotEmpty,
-                  )
-                  .length;
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final isCompact = constraints.maxWidth < 680;
-                  final tileWidth = isCompact ? constraints.maxWidth : 240.0;
-                  return Column(
+    return StreamBuilder<List<TutorialStep>>(
+      stream: service.watchSteps(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final steps = snapshot.data ?? [];
+        final withButtons = steps
+            .where(
+              (step) =>
+                  step.buttonText != null && step.buttonText!.trim().isNotEmpty,
+            )
+            .length;
+        final withImages = steps
+            .where((step) => step.imageUrl.trim().isNotEmpty)
+            .length;
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 720;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FormSection(
+                  title: 'Tutorial Overview',
+                  subtitle: 'Monitor onboarding content coverage',
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: tileWidth,
-                            child: _summaryTile(
-                              icon: Icons.layers_rounded,
-                              label: 'Total Steps',
-                              value: steps.length.toString(),
-                              color: Colors.blue.shade700,
-                            ),
-                          ),
-                          SizedBox(
-                            width: tileWidth,
-                            child: _summaryTile(
-                              icon: Icons.link_rounded,
-                              label: 'Buttons Configured',
-                              value: withButtons.toString(),
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                        ],
+                      InfoCard(
+                        label: 'Total Steps',
+                        value: steps.length.toString(),
+                        icon: Icons.layers_rounded,
+                        tone: const Color(0xFF2563EB),
                       ),
-                      const SizedBox(height: 16),
-                      ListView.separated(
-                        itemCount: steps.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return _buildStepCard(context, steps[index], service);
-                        },
+                      InfoCard(
+                        label: 'Buttons Configured',
+                        value: withButtons.toString(),
+                        icon: Icons.link_rounded,
+                        tone: const Color(0xFF16A34A),
+                      ),
+                      InfoCard(
+                        label: 'Images Added',
+                        value: withImages.toString(),
+                        icon: Icons.image_rounded,
+                        tone: const Color(0xFFEA580C),
                       ),
                     ],
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
+                  ),
+                ),
+                SizedBox(height: isCompact ? 16 : 20),
+                FormSection(
+                  title: 'Tutorial Steps',
+                  subtitle: 'Manage content, images, and actions',
+                  trailing: ElevatedButton.icon(
+                    onPressed: () => _openStepDialog(context, service),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('New Step'),
+                  ),
+                  child: steps.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'No tutorial steps yet. Create the first step to get started.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        )
+                      : _buildStepsTable(context, steps, service, isCompact),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

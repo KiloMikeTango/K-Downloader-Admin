@@ -6,6 +6,7 @@ import 'package:video_downloader_admin/pages/settings_page.dart';
 import 'package:video_downloader_admin/pages/tutorial_steps_page.dart';
 import 'package:video_downloader_admin/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:video_downloader_admin/widgets/page_header.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,6 +18,23 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int selectedPage = 0;
   final AuthService _authService = AuthService();
+  final List<_NavItemData> _navItems = const [
+    _NavItemData(
+      label: 'Notifications',
+      subtitle: 'Broadcast to all users',
+      icon: Icons.notifications_active_outlined,
+    ),
+    _NavItemData(
+      label: 'Tutorial Steps',
+      subtitle: 'Manage onboarding content',
+      icon: Icons.article_outlined,
+    ),
+    _NavItemData(
+      label: 'Settings',
+      subtitle: 'Admin controls and rules',
+      icon: Icons.settings_outlined,
+    ),
+  ];
 
   Widget _buildSidebar(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -41,16 +59,17 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Icon(
                   Icons.admin_panel_settings,
-                  color: Colors.blue.shade700,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 24,
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'K-Downloader Admin',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                Expanded(
+                  child: Text(
+                    'K-Downloader Admin',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -61,24 +80,13 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
               children: [
-                _SidebarItem(
-                  icon: Icons.notifications_active_outlined,
-                  label: 'Send Notification',
-                  selected: selectedPage == 0,
-                  onTap: () => setState(() => selectedPage = 0),
-                ),
-                _SidebarItem(
-                  icon: Icons.article_outlined,
-                  label: 'Tutorial Steps',
-                  selected: selectedPage == 1,
-                  onTap: () => setState(() => selectedPage = 1),
-                ),
-                _SidebarItem(
-                  icon: Icons.settings_outlined,
-                  label: 'App Settings',
-                  selected: selectedPage == 2,
-                  onTap: () => setState(() => selectedPage = 2),
-                ),
+                for (var i = 0; i < _navItems.length; i++)
+                  _SidebarItem(
+                    icon: _navItems[i].icon,
+                    label: _navItems[i].label,
+                    selected: selectedPage == i,
+                    onTap: () => setState(() => selectedPage = i),
+                  ),
               ],
             ),
           ),
@@ -87,296 +95,174 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 600;
-
-    String title;
-    switch (selectedPage) {
-      case 0:
-        title = 'Broadcast Notification';
-        break;
-      case 1:
-        title = 'Tutorial Steps';
-        break;
-      case 2:
-        title = 'App Settings';
-        break;
-      default:
-        title = 'Dashboard';
-    }
-
+  Widget _buildHeader(BuildContext context, bool isCompact) {
+    final current = _navItems[selectedPage];
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: screenWidth >= 900 ? 24 : 16,
-        vertical: isSmallScreen ? 12 : 16,
+        horizontal: isCompact ? 16 : 24,
+        vertical: isCompact ? 12 : 18,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
-      child: Row(
-        children: [
-          Flexible(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: screenWidth >= 900 ? 20 : 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+      child: PageHeader(
+        title: current.label,
+        subtitle: current.subtitle,
+        trailing: _buildUserActions(context, isCompact),
+      ),
+    );
+  }
+
+  Widget _buildUserActions(BuildContext context, bool isCompact) {
+    return StreamBuilder<User?>(
+      stream: _authService.authStateChanges,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        if (user == null) return const SizedBox.shrink();
+        final theme = Theme.of(context);
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withAlpha(16),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withAlpha(40),
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SizedBox(width: isSmallScreen ? 8 : 16),
-          StreamBuilder<User?>(
-            stream: _authService.authStateChanges,
-            builder: (context, snapshot) {
-              final user = snapshot.data;
-              if (user == null) return const SizedBox.shrink();
-
-              if (isSmallScreen) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.person_outline,
-                        size: 20,
-                        color: Colors.grey.shade700,
-                      ),
-                      tooltip: user.email ?? 'Admin',
-                      onPressed: null,
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Logout'),
-                            content: const Text(
-                              'Are you sure you want to logout?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                ),
-                                child: const Text('Logout'),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (confirm == true) {
-                          await _authService.signOut();
-                        }
-                      },
-                      icon: const Icon(Icons.logout, size: 16),
-                      label: const Text('Logout'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red.shade700,
-                        side: BorderSide(color: Colors.red.shade300),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.person_outline,
-                            size: 16,
-                            color: Colors.grey.shade700,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              user.email ?? 'Admin',
-                              style: TextStyle(
-                                color: Colors.grey.shade800,
-                                fontSize: 13,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  Icon(
+                    Icons.person_outline,
+                    size: 16,
+                    color: theme.colorScheme.primary,
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Logout'),
-                          content: const Text(
-                            'Are you sure you want to logout?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text('Logout'),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (confirm == true) {
-                        await _authService.signOut();
-                      }
-                    },
-                    icon: const Icon(Icons.logout, size: 16),
-                    label: const Text('Logout'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red.shade700,
-                      side: BorderSide(color: Colors.red.shade300),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                  const SizedBox(width: 6),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isCompact ? 120 : 180,
+                    ),
+                    child: Text(
+                      user.email ?? 'Admin',
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Logout'),
+                    content: const Text('Are you sure you want to logout?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.error,
+                        ),
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await _authService.signOut();
+                }
+              },
+              icon: Icon(
+                Icons.logout,
+                size: 16,
+                color: theme.colorScheme.error,
+              ),
+              label: Text(
+                'Logout',
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: theme.colorScheme.error.withAlpha(80)),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildPageBody(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final maxContentWidth = screenWidth >= 1400 ? 1200.0 : 900.0;
+    final maxContentWidth = screenWidth >= 1400 ? 1200.0 : 980.0;
     final isWide = screenWidth >= 900;
+    final pages = const [
+      NotificationsPage(),
+      TutorialStepsPage(),
+      SettingsPage(),
+    ];
 
-    Widget child;
-    switch (selectedPage) {
-      case 0:
-        child = const NotificationsPage();
-        break;
-      case 1:
-        child = const TutorialStepsPage();
-        break;
-      case 2:
-        child = const SettingsPage();
-        break;
-      default:
-        child = const SizedBox();
-    }
-
-    return Container(
-      color: Colors.grey.shade50,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isWide ? 24 : 16,
-                  vertical: isWide ? 24 : 16,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!isWide) ...[
-                        _buildMobileNav(context),
-                        const SizedBox(height: 16),
-                      ],
-                      const DailyStatsCard(),
-                      const SizedBox(height: 20),
-                      child,
-                    ],
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isWide ? 24 : 16,
+                vertical: isWide ? 24 : 16,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const DailyStatsCard(),
+                    const SizedBox(height: 20),
+                    IndexedStack(index: selectedPage, children: pages),
+                  ],
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMobileNav(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _MobileNavButton(
-          label: 'Notifications',
-          icon: Icons.notifications_active_outlined,
-          selected: selectedPage == 0,
-          onTap: () => setState(() => selectedPage = 0),
-        ),
-        _MobileNavButton(
-          label: 'Tutorial',
-          icon: Icons.article_outlined,
-          selected: selectedPage == 1,
-          onTap: () => setState(() => selectedPage = 1),
-        ),
-        _MobileNavButton(
-          label: 'Settings',
-          icon: Icons.settings_outlined,
-          selected: selectedPage == 2,
-          onTap: () => setState(() => selectedPage = 2),
-        ),
-      ],
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWide = screenWidth >= 900;
+    final isDesktop = screenWidth >= 1024;
+    final isCompact = screenWidth < 720;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context)),
+      appBar: isDesktop
+          ? null
+          : AppBar(title: Text(_navItems[selectedPage].label)),
       body: SafeArea(
         child: Row(
           children: [
-            if (isWide) _buildSidebar(context),
+            if (isDesktop) _buildSidebar(context),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader(context),
+                  if (isDesktop) _buildHeader(context, isCompact),
                   Expanded(child: _buildPageBody(context)),
                 ],
               ),
@@ -410,10 +296,14 @@ class _SidebarItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         margin: const EdgeInsets.only(bottom: 4),
         decoration: BoxDecoration(
-          color: selected ? Colors.blue.shade50 : Colors.transparent,
+          color: selected
+              ? Theme.of(context).colorScheme.primary.withAlpha(18)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: selected
-              ? Border.all(color: Colors.blue.shade200, width: 1)
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary.withAlpha(60),
+                )
               : null,
         ),
         child: Row(
@@ -421,15 +311,19 @@ class _SidebarItem extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: selected ? Colors.blue.shade700 : Colors.grey.shade700,
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.grey.shade700,
             ),
             const SizedBox(width: 12),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                color: selected ? Colors.blue.shade700 : Colors.grey.shade800,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey.shade800,
               ),
             ),
           ],
@@ -439,44 +333,14 @@ class _SidebarItem extends StatelessWidget {
   }
 }
 
-class _MobileNavButton extends StatelessWidget {
+class _NavItemData {
   final String label;
+  final String subtitle;
   final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
 
-  const _MobileNavButton({
+  const _NavItemData({
     required this.label,
+    required this.subtitle,
     required this.icon,
-    required this.selected,
-    required this.onTap,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(
-        icon,
-        size: 18,
-        color: selected ? Colors.blue.shade700 : Colors.grey.shade700,
-      ),
-      label: Text(
-        label,
-        style: TextStyle(
-          color: selected ? Colors.blue.shade700 : Colors.grey.shade800,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-          fontSize: 13,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        side: BorderSide(
-          color: selected ? Colors.blue.shade200 : Colors.grey.shade300,
-        ),
-        backgroundColor: selected ? Colors.blue.shade50 : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
 }

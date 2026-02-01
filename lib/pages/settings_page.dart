@@ -1,9 +1,10 @@
 // lib/pages/settings_page.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../widgets/glass_card.dart';
 import '../services/settings_service.dart';
 import 'package:dio/dio.dart';
+import 'package:video_downloader_admin/widgets/app_snackbar.dart';
+import 'package:video_downloader_admin/widgets/form_section.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -67,9 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _saveToken() async {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Bot token kept locally.')));
+    AppSnackBar.showInfo(context, 'Bot token kept locally.');
   }
 
   Future<void> _testBot() async {
@@ -77,9 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final chatId = _chatIdController.text.trim();
 
     if (token.isEmpty || chatId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter both token and chat id.')),
-      );
+      AppSnackBar.showError(context, 'Enter both token and chat id.');
       return;
     }
 
@@ -95,26 +92,19 @@ class _SettingsPageState extends State<SettingsPage> {
       if (res.statusCode == 200 && res.data['ok'] == true) {
         await _settingsService.saveLastTestChatId(chatId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Test message sent successfully.')),
-          );
+          AppSnackBar.showSuccess(context, 'Test message sent successfully.');
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Telegram API error: ${res.statusCode} - ${res.data}',
-              ),
-            ),
+          AppSnackBar.showError(
+            context,
+            'Telegram API error: ${res.statusCode} - ${res.data}',
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send test message: $e')),
-        );
+        AppSnackBar.showError(context, 'Failed to send test message: $e');
       }
     } finally {
       if (mounted) setState(() => _testing = false);
@@ -127,9 +117,13 @@ class _SettingsPageState extends State<SettingsPage> {
       _rulesChecking = false;
       _rulesCheckMessage = message;
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    final isSuccess =
+        message.contains('success') || message.contains('blocked');
+    if (isSuccess) {
+      AppSnackBar.showSuccess(context, message);
+    } else {
+      AppSnackBar.showError(context, message);
+    }
   }
 
   Future<void> _runRulesCheck(
@@ -216,209 +210,181 @@ class _SettingsPageState extends State<SettingsPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 640;
-        return GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'App Settings',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: isCompact ? 16 : 20),
-              if (isMaintenance == null)
-                const Center(child: CircularProgressIndicator())
-              else
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: isCompact,
-                  title: const Text(
-                    'Maintenance mode',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  value: isMaintenance!,
-                  onChanged: _updateMaintenanceFlag,
-                  activeThumbColor: Colors.blue.shade700,
-                ),
-              SizedBox(height: isCompact ? 20 : 24),
-              TextField(
-                controller: _tokenController,
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Bot Token',
-                  hintText: '123456789:ABC-DEF1234...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.blue.shade700,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: isCompact ? 12 : 16),
-              SizedBox(
-                height: 44,
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: _saveToken,
-                  child: const Text(
-                    'Save Token',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: isCompact ? 20 : 24),
-              TextField(
-                controller: _chatIdController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Test Chat ID',
-                  hintText: '123456789',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.blue.shade700,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: isCompact ? 12 : 16),
-              SizedBox(
-                height: 44,
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _testing
-                        ? Colors.grey.shade300
-                        : Colors.blue.shade700,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: _testing ? null : _testBot,
-                  child: _testing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Send Test',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+        final theme = Theme.of(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FormSection(
+              title: 'Platform Availability',
+              subtitle: 'Control user access while maintenance is active',
+              child: isMaintenance == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Maintenance mode',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isMaintenance == true
+                                    ? 'Users see a maintenance notice.'
+                                    : 'The app is available for users.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withAlpha(140),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                ),
-              ),
-              SizedBox(height: isCompact ? 20 : 24),
-              const Text(
-                'Rules Check',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                        Switch(
+                          value: isMaintenance!,
+                          onChanged: _updateMaintenanceFlag,
+                        ),
+                      ],
+                    ),
+            ),
+            SizedBox(height: isCompact ? 16 : 20),
+            FormSection(
+              title: 'Telegram Alerts',
+              subtitle: 'Configure the bot and verify delivery',
+              child: Column(
                 children: [
-                  OutlinedButton(
-                    onPressed: _rulesChecking
-                        ? null
-                        : () => _runRulesCheck('Public read', _testPublicRead),
-                    child: const Text('Public read'),
+                  TextField(
+                    controller: _tokenController,
+                    decoration: const InputDecoration(
+                      labelText: 'Bot Token',
+                      hintText: '123456789:ABC-DEF1234...',
+                    ),
                   ),
-                  OutlinedButton(
-                    onPressed: _rulesChecking
-                        ? null
-                        : () => _runRulesCheck(
-                            'Tutorial read',
-                            _testTutorialRead,
-                          ),
-                    child: const Text('Tutorial read'),
+                  SizedBox(height: isCompact ? 12 : 16),
+                  TextField(
+                    controller: _chatIdController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Test Chat ID',
+                      hintText: '123456789',
+                    ),
                   ),
-                  OutlinedButton(
-                    onPressed: _rulesChecking
-                        ? null
-                        : () => _runRulesCheck('Admin read', _testAdminRead),
-                    child: const Text('Admin read'),
-                  ),
-                  OutlinedButton(
-                    onPressed: _rulesChecking
-                        ? null
-                        : () => _runRulesCheck('Admin write', _testAdminWrite),
-                    child: const Text('Admin write'),
-                  ),
-                  OutlinedButton(
-                    onPressed: _rulesChecking
-                        ? null
-                        : () => _runRulesCheck('Stats read', _testStatsRead),
-                    child: const Text('Stats read'),
-                  ),
-                  OutlinedButton(
-                    onPressed: _rulesChecking ? null : _testStatsWriteDenied,
-                    child: const Text('Stats write'),
+                  SizedBox(height: isCompact ? 16 : 20),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      SizedBox(
+                        height: 44,
+                        width: isCompact ? double.infinity : 160,
+                        child: OutlinedButton(
+                          onPressed: _saveToken,
+                          child: const Text('Save Token'),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 44,
+                        width: isCompact ? double.infinity : 180,
+                        child: ElevatedButton(
+                          onPressed: _testing ? null : _testBot,
+                          child: _testing
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Send Test'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              if (_rulesCheckMessage != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade100),
+            ),
+            SizedBox(height: isCompact ? 16 : 20),
+            FormSection(
+              title: 'Rules Check',
+              subtitle: 'Validate Firestore security rules',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton(
+                        onPressed: _rulesChecking
+                            ? null
+                            : () =>
+                                _runRulesCheck('Public read', _testPublicRead),
+                        child: const Text('Public read'),
+                      ),
+                      OutlinedButton(
+                        onPressed: _rulesChecking
+                            ? null
+                            : () => _runRulesCheck(
+                                  'Tutorial read',
+                                  _testTutorialRead,
+                                ),
+                        child: const Text('Tutorial read'),
+                      ),
+                      OutlinedButton(
+                        onPressed: _rulesChecking
+                            ? null
+                            : () =>
+                                _runRulesCheck('Admin read', _testAdminRead),
+                        child: const Text('Admin read'),
+                      ),
+                      OutlinedButton(
+                        onPressed: _rulesChecking
+                            ? null
+                            : () =>
+                                _runRulesCheck('Admin write', _testAdminWrite),
+                        child: const Text('Admin write'),
+                      ),
+                      OutlinedButton(
+                        onPressed: _rulesChecking
+                            ? null
+                            : () =>
+                                _runRulesCheck('Stats read', _testStatsRead),
+                        child: const Text('Stats read'),
+                      ),
+                      OutlinedButton(
+                        onPressed: _rulesChecking ? null : _testStatsWriteDenied,
+                        child: const Text('Stats write'),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    _rulesCheckMessage!,
-                    style: TextStyle(color: Colors.blue.shade900, fontSize: 13),
-                  ),
-                ),
-              ],
-            ],
-          ),
+                  if (_rulesCheckMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withAlpha(10),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withAlpha(40),
+                        ),
+                      ),
+                      child: Text(
+                        _rulesCheckMessage!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

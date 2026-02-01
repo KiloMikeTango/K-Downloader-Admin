@@ -1,6 +1,7 @@
 // lib/widgets/daily_stats_card.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:video_downloader_admin/widgets/info_card.dart';
 
 class DailyStatsCard extends StatelessWidget {
   const DailyStatsCard({super.key});
@@ -22,20 +23,9 @@ class DailyStatsCard extends StatelessWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final isCompact = constraints.maxWidth < 680;
-            return Container(
-              padding: EdgeInsets.all(isCompact ? 16 : 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(13),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+            return Card(
+              child: Padding(
+                padding: EdgeInsets.all(isCompact ? 16 : 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -43,8 +33,7 @@ class DailyStatsCard extends StatelessWidget {
                     'Today Downloads',
                     style: TextStyle(
                       fontSize: isCompact ? 14 : 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
+                        fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: isCompact ? 12 : 16),
@@ -53,60 +42,64 @@ class DailyStatsCard extends StatelessWidget {
                       spacing: 12,
                       runSpacing: 12,
                       children: [
-                        _buildStatItem('YouTube', yt, Colors.red),
-                        _buildStatItem('TikTok', tk, Colors.green),
-                        _buildStatItem('Facebook', fb, Colors.blue),
+                          InfoCard(
+                            label: 'YouTube',
+                            value: yt.toString(),
+                            icon: Icons.play_circle_fill,
+                            tone: const Color(0xFFDC2626),
+                          ),
+                          InfoCard(
+                            label: 'TikTok',
+                            value: tk.toString(),
+                            icon: Icons.music_note_rounded,
+                            tone: const Color(0xFF059669),
+                          ),
+                          InfoCard(
+                            label: 'Facebook',
+                            value: fb.toString(),
+                            icon: Icons.facebook_rounded,
+                            tone: const Color(0xFF2563EB),
+                          ),
                       ],
                     )
                   else
                     Row(
                       children: [
-                        Expanded(child: _buildStatItem('YouTube', yt, Colors.red)),
+                          Expanded(
+                            child: InfoCard(
+                              label: 'YouTube',
+                              value: yt.toString(),
+                              icon: Icons.play_circle_fill,
+                              tone: const Color(0xFFDC2626),
+                            ),
+                          ),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildStatItem('TikTok', tk, Colors.green)),
+                          Expanded(
+                            child: InfoCard(
+                              label: 'TikTok',
+                              value: tk.toString(),
+                              icon: Icons.music_note_rounded,
+                              tone: const Color(0xFF059669),
+                            ),
+                          ),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildStatItem('Facebook', fb, Colors.blue)),
+                          Expanded(
+                            child: InfoCard(
+                              label: 'Facebook',
+                              value: fb.toString(),
+                              icon: Icons.facebook_rounded,
+                              tone: const Color(0xFF2563EB),
+                            ),
+                          ),
                       ],
                     ),
                 ],
+                ),
               ),
             );
           },
         );
       },
-    );
-  }
-
-  Widget _buildStatItem(String label, int value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withAlpha(26),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(51)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
