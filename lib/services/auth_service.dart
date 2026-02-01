@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -23,28 +24,96 @@ class AuthService {
     if (user.email == null || !user.email!.contains('@')) {
       return false;
     }
+    final email = user.email!;
+    var adminsPermissionDenied = false;
 
     try {
-      final doc = await _firestore.collection('admins').doc(user.email).get();
+      final doc = await _firestore.collection('admins').doc(email).get();
 
-      if (!doc.exists) {
+      if (doc.exists) {
+        final data = doc.data();
+        if (data == null) {
+          return false;
+        }
+
+        final isAdminFlag = data['isAdmin'];
+        return isAdminFlag == true;
+      }
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        adminsPermissionDenied = true;
+      } else {
+        return false;
+      }
+    } catch (_) {
+      return false;
+    }
+
+    try {
+      final configDoc = await _firestore
+          .collection('admin')
+          .doc('config')
+          .get();
+      if (!configDoc.exists) {
         return false;
       }
 
-      final data = doc.data();
-      if (data == null) {
-        return false;
+      final data = configDoc.data() ?? {};
+      final adminsList = data['admins'] ?? data['adminEmails'];
+      if (adminsList is List) {
+        return adminsList.contains(email);
       }
-
-      final isAdminFlag = data['isAdmin'];
-      return isAdminFlag == true;
-    } catch (e) {
+      final singleAdmin = data['admin'];
+      if (singleAdmin is String) {
+        return singleAdmin == email;
+      }
+      return false;
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        if (adminsPermissionDenied) {
+          throw Exception(
+            'Admin check blocked by Firestore rules. Allow read for admins/{email} or admin/config.',
+          );
+        }
+        throw Exception(
+          'Admin check blocked by Firestore rules. Allow read for admin/config.',
+        );
+      }
+      return false;
+    } catch (_) {
       return false;
     }
   }
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      if (kIsWeb) {
+        final provider = GoogleAuthProvider()
+          ..addScope('openid')
+          ..addScope('email')
+          ..addScope('profile');
+        final userCredential = await _auth.signInWithPopup(provider);
+
+        if (userCredential.user == null) {
+          throw Exception('No user returned from Firebase.');
+        }
+
+        if (userCredential.user?.email == null) {
+          throw Exception('User email is null.');
+        }
+
+        final adminStatus = await isAdmin().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () => false,
+        );
+
+        if (!adminStatus) {
+          throw Exception('Access denied.');
+        }
+
+        return userCredential;
+      }
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -52,7 +121,6 @@ class AuthService {
       }
 
       if (googleUser.email.isEmpty) {
-        await _googleSignIn.signOut();
         throw Exception('Invalid account: No email.');
       }
 
@@ -60,7 +128,6 @@ class AuthService {
           await googleUser.authentication;
 
       if (googleAuth.idToken == null && googleAuth.accessToken == null) {
-        await _googleSignIn.signOut();
         throw Exception('No authentication tokens received.');
       }
 
@@ -70,19 +137,16 @@ class AuthService {
       );
 
       if (credential.idToken == null && credential.accessToken == null) {
-        await _googleSignIn.signOut();
         throw Exception('Invalid credential: Both tokens are null.');
       }
 
       final userCredential = await _auth.signInWithCredential(credential);
 
       if (userCredential.user == null) {
-        await signOut();
         throw Exception('No user returned from Firebase.');
       }
 
       if (userCredential.user?.email == null) {
-        await signOut();
         throw Exception('User email is null.');
       }
 
@@ -92,17 +156,11 @@ class AuthService {
       );
 
       if (!adminStatus) {
-        await signOut();
         throw Exception('Access denied.');
       }
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      try {
-        await signOut();
-      } catch (_) {
-        // Ignore
-      }
       final errorMsg = '${e.code}: ${e.message ?? "No message"}';
       if (e.code == 'account-exists-with-different-credential') {
         throw Exception('Account exists: $errorMsg');
@@ -116,11 +174,6 @@ class AuthService {
         throw Exception('Auth error: $errorMsg');
       }
     } catch (e) {
-      try {
-        await signOut();
-      } catch (_) {
-        // Ignore
-      }
       final errorStr = e.toString();
       if (errorStr.contains('Exception: ')) {
         rethrow;
@@ -129,18 +182,12 @@ class AuthService {
     }
   }
 
-  Future<bool> verifyAdminWithSecurityCheck() async {
-    final user = _auth.currentUser;
-    if (user == null) return false;
-
-    if (!user.emailVerified && user.providerData.isEmpty) {
-      return false;
-    }
-
-    return await isAdmin();
-  }
-
   Future<void> signOut() async {
-    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    try {
+      await _auth.signOut();
+    } catch (_) {}
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
   }
 }

@@ -27,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         final errorStr = e.toString();
         if (errorStr.contains('Access denied') || errorStr.contains('Admin')) {
