@@ -1,11 +1,7 @@
 // lib/pages/login_page.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:video_downloader_admin/services/auth_service.dart';
 import 'package:video_downloader_admin/widgets/glass_card.dart';
-
-const Color kAdminBg = Color(0xFF05060A);
-const Color kAdminAccent = Color(0xFF4F46E5);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,11 +14,6 @@ class _LoginPageState extends State<LoginPage> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
-
-  double _scale(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return (width / 1280).clamp(0.8, 1.4);
-  }
 
   Future<void> _signInWithGoogle() async {
     setState(() {
@@ -82,188 +73,140 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final s = _scale(context);
     final isWide = MediaQuery.of(context).size.width >= 600;
 
     return Scaffold(
-      backgroundColor: kAdminBg,
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF05060A), Color(0xFF111827)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      backgroundColor: Colors.grey.shade50,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 440 : double.infinity,
               ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(24 * s),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isWide ? 500 : double.infinity,
-                  ),
-                  child: GlassCard(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Logo and Title
-                        Center(
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 70 * s,
-                                height: 70 * s,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.4),
-                                    width: 2,
-                                  ),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      kAdminAccent.withOpacity(0.9),
-                                      Colors.cyanAccent.withOpacity(0.6),
-                                    ],
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.admin_panel_settings,
-                                  color: Colors.white,
-                                  size: 35 * s,
-                                ),
-                              ),
-                              SizedBox(height: 24 * s),
-                              Text(
-                                'Admin Login',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32 * s,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 10 * s),
-                              Text(
-                                'K-Downloader Admin Panel',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 14 * s,
-                                ),
-                              ),
-                            ],
+              child: GlassCard(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 8),
+                    Icon(
+                      Icons.admin_panel_settings,
+                      size: 48,
+                      color: Colors.blue.shade700,
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Admin Login',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'K-Downloader Admin Panel',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+
+                    if (_errorMessage != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.red.shade200,
+                            width: 1,
                           ),
                         ),
-                        SizedBox(height: 50 * s),
-
-                        // Error Message
-                        if (_errorMessage != null)
-                          Container(
-                            padding: EdgeInsets.all(14 * s),
-                            margin: EdgeInsets.only(bottom: 24 * s),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12 * s),
-                              border: Border.all(
-                                color: Colors.red.withOpacity(0.5),
-                                width: 1,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red.shade700,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  color: Colors.red[300],
-                                  size: 22 * s,
+                          ],
+                        ),
+                      ),
+
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _signInWithGoogle,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.grey,
                                 ),
-                                SizedBox(width: 10 * s),
-                                Expanded(
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: TextStyle(
-                                      color: Colors.red[300],
-                                      fontSize: 13 * s,
-                                    ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    color: Colors.white,
+                                  ),
+                                  child: const Icon(
+                                    Icons.g_mobiledata,
+                                    color: Colors.red,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Sign in with Google',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-
-                        // Google Sign In Button
-                        _buildGmailButton(
-                          context: context,
-                          onPressed: _isLoading ? null : _signInWithGoogle,
-                          isLoading: _isLoading,
-                        ),
-                      ],
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGmailButton({
-    required BuildContext context,
-    required VoidCallback? onPressed,
-    bool isLoading = false,
-  }) {
-    final s = _scale(context);
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        padding: EdgeInsets.symmetric(vertical: 18 * s),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12 * s),
         ),
-        elevation: 2,
       ),
-      child: isLoading
-          ? SizedBox(
-              height: 24 * s,
-              width: 24 * s,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[700]!),
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 22 * s,
-                  height: 22 * s,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: Colors.white,
-                  ),
-                  child: Icon(
-                    Icons.g_mobiledata,
-                    color: Colors.red,
-                    size: 20 * s,
-                  ),
-                ),
-                SizedBox(width: 14 * s),
-                Text(
-                  'Sign in with Google',
-                  style: TextStyle(
-                    fontSize: 16 * s,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }

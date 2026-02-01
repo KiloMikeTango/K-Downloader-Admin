@@ -7,9 +7,6 @@ class DailyStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = MediaQuery.of(context).size.width / 1280;
-    final s = scale.clamp(0.8, 1.4);
-
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('stats')
@@ -23,14 +20,18 @@ class DailyStatsCard extends StatelessWidget {
         final fb = (data?['facebookCount'] ?? 0) as int;
 
         return Container(
-          padding: EdgeInsets.all(16 * s),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(20 * s),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.18),
-              width: 1.0,
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,19 +39,19 @@ class DailyStatsCard extends StatelessWidget {
               Text(
                 'Today Downloads (24h)',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16 * s,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
                 ),
               ),
-              SizedBox(height: 12 * s),
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  _buildChip('YouTube', yt, Colors.redAccent, s),
-                  SizedBox(width: 10 * s),
-                  _buildChip('TikTok', tk, Colors.greenAccent, s),
-                  SizedBox(width: 10 * s),
-                  _buildChip('Facebook', fb, Colors.blueAccent, s),
+                  Expanded(child: _buildStatItem('YouTube', yt, Colors.red)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatItem('TikTok', tk, Colors.green)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatItem('Facebook', fb, Colors.blue)),
                 ],
               ),
             ],
@@ -60,37 +61,35 @@ class DailyStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(String label, int value, Color color, double s) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 12 * s),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(14 * s),
-          border: Border.all(color: color.withOpacity(0.6), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: 12 * s,
-                fontWeight: FontWeight.w500,
-              ),
+  Widget _buildStatItem(String label, int value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
             ),
-            SizedBox(height: 4 * s),
-            Text(
-              value.toString(),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18 * s,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

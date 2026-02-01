@@ -1,7 +1,6 @@
 // lib/pages/settings_page.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'home_page.dart';
 import '../widgets/glass_card.dart';
 import '../services/settings_service.dart';
 import 'package:dio/dio.dart';
@@ -58,11 +57,6 @@ class _SettingsPageState extends State<SettingsPage> {
         .set({'enabled': value}, SetOptions(merge: true));
   }
 
-  double _scale(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return (width / 1280).clamp(0.8, 1.4);
-  }
-
   Future<void> _saveToken() async {
     final token = _tokenController.text.trim();
     await _settingsService.saveToken(token);
@@ -86,8 +80,7 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _testing = true);
     try {
       final dio = Dio();
-      final url =
-          'https://api.telegram.org/bot$token/sendMessage'; // Telegram Bot API
+      final url = 'https://api.telegram.org/bot$token/sendMessage';
       final res = await dio.post(
         url,
         data: {'chat_id': chatId, 'text': 'K Downloader bot test message.'},
@@ -131,169 +124,151 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final s = _scale(context);
     return GlassCard(
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'App Settings',
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 18 * s,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
-            SizedBox(height: 16 * s),
+            const SizedBox(height: 24),
 
-            // Maintenance
             if (isMaintenance == null)
-              const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              )
+              const Center(child: CircularProgressIndicator())
             else
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(
+                title: const Text(
                   'Maintenance mode',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14 * s,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
                 ),
                 subtitle: Text(
                   'Enable maintenance mode.',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
-                    fontSize: 12 * s,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
                 value: isMaintenance!,
                 onChanged: _updateMaintenanceFlag,
-                activeColor: kAdminAccent,
+                activeColor: Colors.blue.shade700,
               ),
-            SizedBox(height: 20 * s),
+            const SizedBox(height: 32),
 
-            // Bot token
-            Text(
+            const Text(
               'Telegram Bot Token',
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 14 * s,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
             ),
-            SizedBox(height: 8 * s),
+            const SizedBox(height: 8),
             TextField(
               controller: _tokenController,
-              style: TextStyle(color: Colors.white, fontSize: 13 * s),
+              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: '123456789:ABC-DEF1234...',
-                hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
-                  fontSize: 13 * s,
-                ),
+                hintStyle: TextStyle(color: Colors.grey.shade400),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12 * s),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12 * s),
-                  borderSide: BorderSide(color: kAdminAccent, width: 1.4),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
                 ),
               ),
             ),
-            SizedBox(height: 10 * s),
+            const SizedBox(height: 12),
             SizedBox(
-              height: 40 * s,
+              height: 40,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kAdminAccent.withOpacity(0.9),
+                  backgroundColor: Colors.blue.shade700,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10 * s),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 onPressed: _saveToken,
-                child: Text(
+                child: const Text(
                   'Save Bot Token',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 13 * s,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 24 * s),
+            const SizedBox(height: 32),
 
-            // Test bot
-            Text(
+            const Text(
               'Test Bot (send message)',
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 14 * s,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
             ),
-            SizedBox(height: 8 * s),
+            const SizedBox(height: 8),
             TextField(
               controller: _chatIdController,
               keyboardType: TextInputType.number,
-              style: TextStyle(color: Colors.white, fontSize: 13 * s),
+              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Chat ID',
-                labelStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12 * s,
-                ),
+                labelStyle: TextStyle(color: Colors.grey.shade600),
                 hintText: 'e.g. 123456789',
-                hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
-                  fontSize: 13 * s,
-                ),
+                hintStyle: TextStyle(color: Colors.grey.shade400),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12 * s),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12 * s),
-                  borderSide: BorderSide(color: kAdminAccent, width: 1.4),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
                 ),
               ),
             ),
-            SizedBox(height: 10 * s),
+            const SizedBox(height: 12),
             SizedBox(
-              height: 40 * s,
+              height: 40,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _testing
-                      ? Colors.white.withOpacity(0.2)
-                      : kAdminAccent,
+                      ? Colors.grey.shade300
+                      : Colors.blue.shade700,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10 * s),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 onPressed: _testing ? null : _testBot,
                 child: _testing
-                    ? SizedBox(
-                        width: 18 * s,
-                        height: 18 * s,
-                        child: const CircularProgressIndicator(
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,
                         ),
                       )
-                    : Text(
+                    : const Text(
                         'Send Test Message',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 13 * s,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

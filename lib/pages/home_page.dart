@@ -1,5 +1,4 @@
 // lib/home_page.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../widgets/daily_stats_card.dart';
 import 'package:video_downloader_admin/pages/notifications_page.dart';
@@ -7,9 +6,6 @@ import 'package:video_downloader_admin/pages/settings_page.dart';
 import 'package:video_downloader_admin/pages/tutorial_steps_page.dart';
 import 'package:video_downloader_admin/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-const Color kAdminBg = Color(0xFF05060A);
-const Color kAdminAccent = Color(0xFF4F46E5);
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,103 +18,79 @@ class _HomePageState extends State<HomePage> {
   int selectedPage = 0;
   final AuthService _authService = AuthService();
 
-  double _scale(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return (width / 1280).clamp(0.8, 1.4);
-  }
-
   Widget _buildSidebar(BuildContext context) {
-    final s = _scale(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18 * s),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          width: 230 * s,
-          margin: EdgeInsets.all(16 * s),
-          padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 20 * s),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.10),
-                Colors.white.withOpacity(0.03),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(18 * s),
-            border: Border.all(color: Colors.white.withOpacity(0.28), width: 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 30 * s,
-                    height: 30 * s,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 1,
-                      ),
-                      gradient: LinearGradient(
-                        colors: [
-                          kAdminAccent.withOpacity(0.9),
-                          Colors.cyanAccent.withOpacity(0.6),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10 * s),
-                  Text(
-                    'K-Downloader Admin',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14 * s,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 24 * s),
-              Text(
-                'Navigation',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.55),
-                  fontSize: 12 * s,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              SizedBox(height: 10 * s),
-              _SidebarItem(
-                icon: Icons.notifications_active_outlined,
-                label: 'Send Notification',
-                selected: selectedPage == 0,
-                onTap: () => setState(() => selectedPage = 0),
-              ),
-              _SidebarItem(
-                icon: Icons.article_outlined,
-                label: 'Tutorial Steps',
-                selected: selectedPage == 1,
-                onTap: () => setState(() => selectedPage = 1),
-              ),
-              _SidebarItem(
-                icon: Icons.settings_outlined,
-                label: 'App Settings',
-                selected: selectedPage == 2,
-                onTap: () => setState(() => selectedPage = 2),
-              ),
-            ],
-          ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final sidebarWidth = screenWidth >= 1200 ? 280.0 : 260.0;
+
+    return Container(
+      width: sidebarWidth,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          right: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.admin_panel_settings,
+                  color: Colors.blue.shade700,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'K-Downloader Admin',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              children: [
+                _SidebarItem(
+                  icon: Icons.notifications_active_outlined,
+                  label: 'Send Notification',
+                  selected: selectedPage == 0,
+                  onTap: () => setState(() => selectedPage = 0),
+                ),
+                _SidebarItem(
+                  icon: Icons.article_outlined,
+                  label: 'Tutorial Steps',
+                  selected: selectedPage == 1,
+                  onTap: () => setState(() => selectedPage = 1),
+                ),
+                _SidebarItem(
+                  icon: Icons.settings_outlined,
+                  label: 'App Settings',
+                  selected: selectedPage == 2,
+                  onTap: () => setState(() => selectedPage = 2),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    final s = _scale(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+
     String title;
     switch (selectedPage) {
       case 0:
@@ -134,115 +106,149 @@ class _HomePageState extends State<HomePage> {
         title = 'Dashboard';
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 16 * s),
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth >= 900 ? 24 : 16,
+        vertical: 16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
       child: Row(
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22 * s,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(width: 10 * s),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 4 * s),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              color: Colors.white.withOpacity(0.08),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 0.8,
-              ),
-            ),
+          Flexible(
             child: Text(
-              'K Downloader',
+              title,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 11 * s,
+                fontSize: screenWidth >= 900 ? 20 : 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          // User info and logout
+          SizedBox(width: isSmallScreen ? 8 : 16),
           StreamBuilder<User?>(
             stream: _authService.authStateChanges,
             builder: (context, snapshot) {
               final user = snapshot.data;
               if (user == null) return const SizedBox.shrink();
 
-              return Row(
-                children: [
-                  // User email
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12 * s,
-                      vertical: 6 * s,
+              if (isSmallScreen) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.person_outline,
+                        size: 20,
+                        color: Colors.grey.shade700,
+                      ),
+                      tooltip: user.email ?? 'Admin',
+                      onPressed: null,
                     ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8 * s),
-                      color: Colors.white.withOpacity(0.08),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
-                        width: 0.8,
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Logout'),
+                            content: const Text(
+                              'Are you sure you want to logout?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                child: const Text('Logout'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await _authService.signOut();
+                        }
+                      },
+                      icon: const Icon(Icons.logout, size: 16),
+                      label: const Text('Logout'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade300),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16 * s,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                        SizedBox(width: 6 * s),
-                        Text(
-                          user.email ?? 'Admin',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 12 * s,
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 16,
+                            color: Colors.grey.shade700,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              user.email ?? 'Admin',
+                              style: TextStyle(
+                                color: Colors.grey.shade800,
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(width: 10 * s),
-                  // Logout button
-                  InkWell(
-                    onTap: () async {
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          backgroundColor: const Color(0xFF1F2937),
-                          title: Text(
-                            'Logout',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18 * s,
-                            ),
-                          ),
-                          content: Text(
+                          title: const Text('Logout'),
+                          content: const Text(
                             'Are you sure you want to logout?',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 14 * s,
-                            ),
                           ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.7),
-                                ),
-                              ),
+                              child: const Text('Cancel'),
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
                               style: TextButton.styleFrom(
-                                foregroundColor: Colors.red[300],
+                                foregroundColor: Colors.red,
                               ),
                               child: const Text('Logout'),
                             ),
@@ -254,37 +260,14 @@ class _HomePageState extends State<HomePage> {
                         await _authService.signOut();
                       }
                     },
-                    borderRadius: BorderRadius.circular(8 * s),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12 * s,
-                        vertical: 6 * s,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8 * s),
-                        color: Colors.red.withOpacity(0.15),
-                        border: Border.all(
-                          color: Colors.red.withOpacity(0.3),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.logout,
-                            size: 16 * s,
-                            color: Colors.red[300],
-                          ),
-                          SizedBox(width: 6 * s),
-                          Text(
-                            'Logout',
-                            style: TextStyle(
-                              color: Colors.red[300],
-                              fontSize: 12 * s,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                    icon: const Icon(Icons.logout, size: 16),
+                    label: const Text('Logout'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red.shade700,
+                      side: BorderSide(color: Colors.red.shade300),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
                   ),
@@ -298,7 +281,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildPageBody(BuildContext context) {
-    final s = _scale(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxContentWidth = screenWidth >= 1400 ? 1200.0 : 900.0;
+
     Widget child;
     switch (selectedPage) {
       case 0:
@@ -314,58 +299,58 @@ class _HomePageState extends State<HomePage> {
         child = const SizedBox();
     }
 
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24 * s),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const DailyStatsCard(),
-              SizedBox(height: 20 * s),
-              Expanded(child: child),
-            ],
-          ),
-        ),
+    return Container(
+      color: Colors.grey.shade50,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth >= 900 ? 24 : 16,
+                  vertical: 24,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const DailyStatsCard(),
+                      const SizedBox(height: 24),
+                      child,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width >= 900;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 900;
 
     return Scaffold(
-      backgroundColor: kAdminBg,
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF05060A), Color(0xFF111827)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      backgroundColor: Colors.grey.shade50,
+      body: SafeArea(
+        child: Row(
+          children: [
+            if (isWide) _buildSidebar(context),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context),
+                  Expanded(child: _buildPageBody(context)),
+                ],
               ),
             ),
-          ),
-          SafeArea(
-            child: Row(
-              children: [
-                if (isWide) _buildSidebar(context),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context),
-                      Expanded(child: _buildPageBody(context)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -386,41 +371,36 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final s = (width / 1280).clamp(0.8, 1.4);
-
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4 * s),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10 * s),
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 8 * s),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10 * s),
-            color: selected
-                ? Colors.white.withOpacity(0.12)
-                : Colors.transparent,
-            border: Border.all(
-              color: selected
-                  ? Colors.white.withOpacity(0.45)
-                  : Colors.white.withOpacity(0.10),
-              width: 1,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          color: selected ? Colors.blue.shade50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: selected
+              ? Border.all(color: Colors.blue.shade200, width: 1)
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: selected ? Colors.blue.shade700 : Colors.grey.shade700,
             ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 18 * s, color: Colors.white.withOpacity(0.9)),
-              SizedBox(width: 8 * s),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 13 * s,
-                ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                color: selected ? Colors.blue.shade700 : Colors.grey.shade800,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -22,8 +22,12 @@ class AdminApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "K Downloader Admin Panel",
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.grey[100],
+        scaffoldBackgroundColor: Colors.grey.shade50,
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue.shade700,
+          brightness: Brightness.light,
+        ),
       ),
       home: const AuthWrapper(),
     );
