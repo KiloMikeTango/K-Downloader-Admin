@@ -8,7 +8,7 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId:
         '524411589574-ck9ftbdh83gnn3nn6ohpcik1aqdm5eel.apps.googleusercontent.com',
-    scopes: ['email'],
+    scopes: ['openid', 'email', 'profile'],
   );
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -53,15 +53,15 @@ class AuthService {
 
       if (googleUser.email.isEmpty) {
         await _googleSignIn.signOut();
-        throw Exception('Invalid account.');
+        throw Exception('Invalid account: No email.');
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      if (googleAuth.idToken == null || googleAuth.accessToken == null) {
+      if (googleAuth.idToken == null && googleAuth.accessToken == null) {
         await _googleSignIn.signOut();
-        throw Exception('Authentication failed.');
+        throw Exception('No authentication tokens received.');
       }
 
       final credential = GoogleAuthProvider.credential(
@@ -69,11 +69,21 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+      if (credential.idToken == null && credential.accessToken == null) {
+        await _googleSignIn.signOut();
+        throw Exception('Invalid credential: Both tokens are null.');
+      }
+
       final userCredential = await _auth.signInWithCredential(credential);
 
-      if (userCredential.user?.email != googleUser.email) {
+      if (userCredential.user == null) {
         await signOut();
-        throw Exception('Verification failed.');
+        throw Exception('No user returned from Firebase.');
+      }
+
+      if (userCredential.user?.email == null) {
+        await signOut();
+        throw Exception('User email is null.');
       }
 
       final adminStatus = await isAdmin().timeout(
@@ -87,13 +97,35 @@ class AuthService {
       }
 
       return userCredential;
+    } on FirebaseAuthException catch (e) {
+      try {
+        await signOut();
+      } catch (_) {
+        // Ignore
+      }
+      final errorMsg = '${e.code}: ${e.message ?? "No message"}';
+      if (e.code == 'account-exists-with-different-credential') {
+        throw Exception('Account exists: $errorMsg');
+      } else if (e.code == 'invalid-credential') {
+        throw Exception('Invalid credential: $errorMsg');
+      } else if (e.code == 'operation-not-allowed') {
+        throw Exception('Not allowed: $errorMsg');
+      } else if (e.code == 'user-disabled') {
+        throw Exception('User disabled: $errorMsg');
+      } else {
+        throw Exception('Auth error: $errorMsg');
+      }
     } catch (e) {
       try {
         await signOut();
       } catch (_) {
         // Ignore
       }
-      rethrow;
+      final errorStr = e.toString();
+      if (errorStr.contains('Exception: ')) {
+        rethrow;
+      }
+      throw Exception('Error: $errorStr');
     }
   }
 

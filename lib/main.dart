@@ -20,7 +20,7 @@ class AdminApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: "Admin Notification Panel",
+      title: "K Downloader Admin Panel",
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.grey[100],
         useMaterial3: true,

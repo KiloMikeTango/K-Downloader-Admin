@@ -31,17 +31,44 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await _authService.signInWithGoogle();
+      final result = await _authService.signInWithGoogle();
+      if (result == null) {
+        return;
+      }
     } catch (e) {
       setState(() {
-        final errorStr = e.toString().replaceAll('Exception: ', '');
-        if (errorStr.contains('Access denied')) {
+        final errorStr = e.toString();
+        if (errorStr.contains('Access denied') || errorStr.contains('Admin')) {
           _errorMessage = 'Access denied.';
         } else if (errorStr.contains('network') ||
-            errorStr.contains('Network')) {
+            errorStr.contains('Network') ||
+            errorStr.contains('SERVICE_DISABLED') ||
+            errorStr.contains('People API')) {
           _errorMessage = 'Network error.';
+        } else if (errorStr.contains('popup_closed') ||
+            errorStr.contains('popup_blocked')) {
+          _errorMessage = 'Sign-in canceled.';
+        } else if (errorStr.contains('Invalid account') ||
+            errorStr.contains('Authentication failed') ||
+            errorStr.contains('Verification failed') ||
+            errorStr.contains('Invalid credential') ||
+            errorStr.contains('No tokens') ||
+            errorStr.contains('No user returned') ||
+            errorStr.contains('No ID token') ||
+            errorStr.contains('Auth error')) {
+          final cleanError = errorStr.contains('Exception: ')
+              ? errorStr.split('Exception: ')[1].split('.')[0]
+              : 'Authentication failed.';
+          _errorMessage = cleanError.length > 60
+              ? cleanError.substring(0, 60) + '...'
+              : cleanError;
         } else {
-          _errorMessage = 'Sign-in failed.';
+          final cleanError = errorStr.contains('Exception: ')
+              ? errorStr.split('Exception: ')[1]
+              : errorStr;
+          _errorMessage = cleanError.length > 80
+              ? cleanError.substring(0, 80) + '...'
+              : cleanError;
         }
       });
     } finally {
