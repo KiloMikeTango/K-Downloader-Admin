@@ -249,132 +249,126 @@ class TutorialStepsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Expanded(
-            child: StreamBuilder<List<TutorialStep>>(
-              stream: service.watchSteps(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final steps = snapshot.data ?? [];
-                if (steps.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No tutorial steps yet.\nClick "New Step" to create one.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
+          StreamBuilder<List<TutorialStep>>(
+            stream: service.watchSteps(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final steps = snapshot.data ?? [];
+              if (steps.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No tutorial steps yet.\nClick "New Step" to create one.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                  ),
+                );
+              }
+              return ListView.separated(
+                itemCount: steps.length,
+                separatorBuilder: (context, index) =>
+                    Divider(color: Colors.grey.shade200),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final step = steps[index];
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue.shade100,
+                      child: Text(
+                        step.order.toString(),
+                        style: TextStyle(
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      step.text,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.black87,
                         fontSize: 14,
                       ),
                     ),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: steps.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(color: Colors.grey.shade200),
-                  itemBuilder: (context, index) {
-                    final step = steps[index];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.shade100,
-                        child: Text(
-                          step.order.toString(),
-                          style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        step.text,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
-                        ),
-                      ),
-                      subtitle:
-                          step.buttonText != null &&
-                              step.buttonText!.trim().isNotEmpty
-                          ? Text(
-                              step.buttonText!,
-                              style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontSize: 12,
-                              ),
-                            )
-                          : Text(
-                              'No button',
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 12,
-                              ),
-                            ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'Edit',
-                            icon: Icon(
-                              Icons.edit_rounded,
-                              size: 20,
+                    subtitle:
+                        step.buttonText != null &&
+                            step.buttonText!.trim().isNotEmpty
+                        ? Text(
+                            step.buttonText!,
+                            style: TextStyle(
                               color: Colors.blue.shade700,
+                              fontSize: 12,
                             ),
-                            onPressed: () => _openStepDialog(
-                              context,
-                              service,
-                              existing: step,
+                          )
+                        : Text(
+                            'No button',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              size: 20,
-                              color: Colors.red.shade700,
-                            ),
-                            onPressed: () async {
-                              final confirmed =
-                                  await showDialog<bool>(
-                                    context: context,
-                                    builder: (_) => AlertDialog(
-                                      title: const Text('Delete step?'),
-                                      content: Text(
-                                        'This will permanently delete step "${step.text}".',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: const Text(
-                                            'Delete',
-                                            style: TextStyle(color: Colors.red),
-                                          ),
-                                        ),
-                                      ],
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Edit',
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            size: 20,
+                            color: Colors.blue.shade700,
+                          ),
+                          onPressed: () =>
+                              _openStepDialog(context, service, existing: step),
+                        ),
+                        IconButton(
+                          tooltip: 'Delete',
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 20,
+                            color: Colors.red.shade700,
+                          ),
+                          onPressed: () async {
+                            final confirmed =
+                                await showDialog<bool>(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Delete step?'),
+                                    content: Text(
+                                      'This will permanently delete step "${step.text}".',
                                     ),
-                                  ) ??
-                                  false;
-                              if (confirmed) {
-                                await service.deleteStep(step.id);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ) ??
+                                false;
+                            if (confirmed) {
+                              await service.deleteStep(step.id);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),

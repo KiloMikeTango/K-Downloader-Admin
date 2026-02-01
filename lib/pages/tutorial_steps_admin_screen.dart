@@ -4,6 +4,7 @@ import 'package:video_downloader_admin/services/tutorial_steps_service.dart';
 
 class TutorialStepsAdminScreen extends StatelessWidget {
   final _service = TutorialStepsService();
+   TutorialStepsAdminScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class TutorialStepsAdminScreen extends StatelessWidget {
   Widget _headerBar(BuildContext context) {
     return Row(
       children: [
-        Text('Tutorial Steps', /* glassy title style */),
+        Text('Tutorial Steps' /* glassy title style */),
         const Spacer(),
         ElevatedButton(
           onPressed: () => _openStepForm(context),
@@ -44,14 +45,8 @@ class TutorialStepsAdminScreen extends StatelessWidget {
         final s = steps[i];
         return ListTile(
           leading: Text(s.order.toString()),
-          title: Text(
-            s.text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            s.buttonText ?? 'No button',
-          ),
+          title: Text(s.text, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text(s.buttonText ?? 'No button'),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
