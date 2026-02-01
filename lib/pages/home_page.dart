@@ -5,6 +5,8 @@ import '../widgets/daily_stats_card.dart';
 import 'package:video_downloader_admin/pages/notifications_page.dart';
 import 'package:video_downloader_admin/pages/settings_page.dart';
 import 'package:video_downloader_admin/pages/tutorial_steps_page.dart';
+import 'package:video_downloader_admin/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 const Color kAdminBg = Color(0xFF05060A);
 const Color kAdminAccent = Color(0xFF4F46E5);
@@ -17,7 +19,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int selectedPage = 0; // 0 = Notification, 1 = Tutorial Steps, 2 = Settings
+  int selectedPage = 0;
+  final AuthService _authService = AuthService();
 
   double _scale(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -163,6 +166,132 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const Spacer(),
+          // User info and logout
+          StreamBuilder<User?>(
+            stream: _authService.authStateChanges,
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              if (user == null) return const SizedBox.shrink();
+
+              return Row(
+                children: [
+                  // User email
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12 * s,
+                      vertical: 6 * s,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8 * s),
+                      color: Colors.white.withOpacity(0.08),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 16 * s,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                        SizedBox(width: 6 * s),
+                        Text(
+                          user.email ?? 'Admin',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12 * s,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 10 * s),
+                  // Logout button
+                  InkWell(
+                    onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: const Color(0xFF1F2937),
+                          title: Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18 * s,
+                            ),
+                          ),
+                          content: Text(
+                            'Are you sure you want to logout?',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14 * s,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red[300],
+                              ),
+                              child: const Text('Logout'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        await _authService.signOut();
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(8 * s),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12 * s,
+                        vertical: 6 * s,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8 * s),
+                        color: Colors.red.withOpacity(0.15),
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.3),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.logout,
+                            size: 16 * s,
+                            color: Colors.red[300],
+                          ),
+                          SizedBox(width: 6 * s),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: Colors.red[300],
+                              fontSize: 12 * s,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -193,9 +322,9 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const DailyStatsCard(), // <- analytics on top
+              const DailyStatsCard(),
               SizedBox(height: 20 * s),
-              Expanded(child: child), // <- page content below
+              Expanded(child: child),
             ],
           ),
         ),

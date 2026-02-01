@@ -90,10 +90,7 @@ class _SettingsPageState extends State<SettingsPage> {
           'https://api.telegram.org/bot$token/sendMessage'; // Telegram Bot API
       final res = await dio.post(
         url,
-        data: {
-          'chat_id': chatId,
-          'text': '✅ K Downloader bot test message from admin panel.',
-        },
+        data: {'chat_id': chatId, 'text': 'K Downloader bot test message.'},
       );
 
       if (res.statusCode == 200 && res.data['ok'] == true) {
@@ -167,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 subtitle: Text(
-                  'If enabled, client app shows maintenance screen.',
+                  'Enable maintenance mode.',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.75),
                     fontSize: 12 * s,

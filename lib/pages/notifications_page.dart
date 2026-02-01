@@ -95,10 +95,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'title': titleController.text.trim(),
             'body': messageController.text.trim(),
           },
-          'android': {
-            'priority': 'HIGH',
-            // optional: channel_id if you use a custom one on client
-          },
+          'android': {'priority': 'HIGH'},
           'data': {'click_action': 'FLUTTER_NOTIFICATION_CLICK'},
         },
       };
